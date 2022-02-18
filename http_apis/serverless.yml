@@ -1,0 +1,167 @@
+service: scrapper
+
+plugins:
+  - serverless-python-requirements
+  - serverless-offline-python
+
+custom:
+  serverless-offline:
+    port: 3001
+  pythonRequirements:
+    dockerizePip: true
+
+package:
+  individually: true
+  exclude:
+    - node_modules/**
+    - a/** # virtualenv
+    - venv/** # virtualenv
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: dev
+  region: us-east-1
+  apiGateway:
+    restApiId: yw8niqk0ab
+    restApiRootResourceId: btxpwjp8qg
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - ec2:DescribeNetworkInterfaces
+        - ec2:CreateNetworkInterface
+        - ec2:DeleteNetworkInterface
+        - ec2:DescribeInstances
+        - ec2:AttachNetworkInterface
+      Resource: 'arn:aws:ec2:${self:provider.region}:*:*'
+  iamManagedPolicies:
+    - arn:aws:iam::aws:policy/AmazonElasticFileSystemClientReadWriteAccess
+
+functions:
+  auth:
+    handler: functions/auth_verifier.handler
+  scrapper:
+    handler: functions/scrape_data.handler
+    timeout: 900 # API Gateway limits it to 30s
+    events:
+      - http:
+          path: /data
+          method: post
+          cors: true
+  url-to-text:
+    handler: functions/url_to_text.handler
+    memorySize: 3008 # max value
+    vpc:
+      securityGroupIds:
+        - sg-0f49f905170414709
+      subnetIds:
+        - subnet-07aab0303d0a52a0f
+    fileSystemConfig:
+      arn: arn:aws:elasticfilesystem:us-east-1:100987174432:access-point/fsap-0ec6283e26e18d333
+      localMountPath: /mnt/efs
+    timeout: 900 # API Gateway limits it to 30s
+    events:
+      - http:
+          path: /data
+          method: get
+          cors: true
+  rate-text:
+    handler: functions/rate_text.handler
+    timeout: 900 # API Gateway limits it to 30s
+    memorySize: 3008 # max value
+    events:
+      - http:
+          path: /rating
+          method: post
+          cors: true
+  tech-filter:
+    handler: functions/technology_filter.handler
+    timeout: 900 # API Gateway limits it to 30s
+    memorySize: 3008 # max value
+    events:
+      - http:
+          path: /filter
+          method: post
+          cors: true
+  search-rate:
+    handler: functions/joomla_search_rate_auth.handler
+    memorySize: 3008 # max value
+    events:
+      - http:
+          path: /oauth
+          method: post
+          cors: true
+  search-rate-auth:
+    handler: functions/joomla_search_rate.handler
+    memorySize: 3008 # max value
+    events:
+      - http:
+          path: /search
+          method: post
+          cors: true
+          authorizer:
+            name: auth
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.authorization
+            type: request
+  search:
+    handler: functions/multiple_search.handler
+    memorySize: 3008 # max value
+    events:
+      - http:
+          path: /search/{search_id}
+          method: get
+          cors: true
+          authorizer:
+            name: auth
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.authorization
+            type: request
+      - http:
+          path: /search
+          method: get
+          cors: true
+          authorizer:
+            name: auth
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.public_token,method.request.header.signature
+            type: request
+  search-setting:
+    handler: functions/search_setting.handler
+    memorySize: 3008 # max value
+    events:
+      - http:
+          path: /results/{result_id}
+          method: patch
+          cors: true
+          authorizer:
+            name: auth
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.authorization
+            type: request
+      - http:
+          path: /results/{result_id}
+          method: delete
+          cors: true
+          authorizer:
+            name: auth
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.authorization
+            type: request
+      - http:
+          path: /search/{search_id}
+          method: delete
+          cors: true
+          authorizer:
+            name: auth
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.authorization
+            type: request
+  map-identifier:
+    handler: functions/map_identifier.handler
+    package: {} # Need separate function deployment
+    events:
+      - http:
+          path: /map
+          method: post
+          cors: true

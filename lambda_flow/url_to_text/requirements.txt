@@ -1,0 +1,14 @@
+docx2txt
+numpy
+pandas
+requests
+textract==1.6.3
+PyPDF2==1.26.0
+beautifulsoup4==4.8.0
+inscriptis
+odfpy
+python-pptx==0.6.18
+pyexcel_ods
+striprtf
+boto3==1.16.21
+urllib3

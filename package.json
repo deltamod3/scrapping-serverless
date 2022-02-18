@@ -1,0 +1,28 @@
+{
+  "name": "scrapper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "python -m unittest discover -s tests",
+    "start:http": "cd http_apis & sls offline start",
+    "deploy:http": "cd http_apis & sls deploy -v",
+    "deploy:1": "cd lambda_flow/search_request & sls deploy -v",
+    "deploy:2": "cd lambda_flow/search & sls deploy -v",
+    "deploy:3": "cd lambda_flow/url_to_text & sls deploy -v",
+    "deploy:4": "cd lambda_flow/rating & sls deploy -v"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "serverless": "2.5.0",
+    "serverless-python-requirements": "^5.1.0",
+    "serverless-offline-python": "^3.22.2"
+  },
+  "dependencies": {
+    "serverless-dynamodb-autoscaling": "^0.6.2"
+  }
+}

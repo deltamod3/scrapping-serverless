@@ -1,0 +1,4 @@
+requests
+pandas
+distlib
+boto3==1.16.21

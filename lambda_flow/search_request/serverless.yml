@@ -1,0 +1,53 @@
+service: flow-1-search-request
+
+plugins:
+  - serverless-python-requirements
+  - serverless-offline-python
+  - serverless-dynamodb-autoscaling
+
+custom:
+  serverless-offline:
+    port: 3001
+  pythonRequirements:
+    dockerizePip: true
+
+package:
+  individually: true
+  exclude:
+    - ../node_modules/**
+    - ../a/** # virtualenv
+    - ../venv/** # virtualenv
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: dev
+  region: us-east-1
+  apiGateway:
+    restApiId: vthrtl92zf
+    restApiRootResourceId: z8hjoyc4rl
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+      Resource: 'arn:aws:dynamodb:us-east-1:100987174432:table/tmp_searches'
+  versionFunctions: false
+
+functions:
+  auth:
+    handler: auth_verifier.handler
+  handler:
+    handler: handler.handler
+    memorySize: 3008 # max value
+    timeout: 900 # API Gateway limits it to 30s
+    provisionedConcurrency: 100
+    events:
+      - http:
+          path: /search
+          method: post
+          cors: true
+          authorizer:
+            name: auth
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.authorization
+            type: request

@@ -1,0 +1,42 @@
+service: flow-3-url-to-text
+
+plugins:
+  - serverless-python-requirements
+  - serverless-offline-python
+  - serverless-dynamodb-autoscaling
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+
+package:
+  individually: true
+  exclude:
+    - ../../node_modules/**
+    - ../../a/** # virtualenv
+    - ../../venv/** # virtualenv
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: dev
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+      Resource: 'arn:aws:dynamodb:us-east-1:100987174432:table/*'
+  versionFunctions: false
+
+functions:
+  handler:
+    handler: handler.handler
+    provisionedConcurrency: 100
+    memorySize: 3008 # max value
+    timeout: 900 # API Gateway limits it to 30s
+    events:
+      - stream: arn:aws:dynamodb:us-east-1:100987174432:table/tmp_results_step1/stream/2020-11-27T18:44:07.778
+
+

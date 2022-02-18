@@ -1,0 +1,4 @@
+distlib
+pycryptodome
+pyOpenSSL
+boto3==1.16.21
